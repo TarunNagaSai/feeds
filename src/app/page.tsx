@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { RefreshCw, Sparkles } from "lucide-react";
 import { useFeed } from "@/hooks/useFeed";
 import { byId } from "@/lib/category";
-import { inCategory, notHidden, rankAll } from "@/lib/feed";
+import { inCategory, mixByKind, notHidden, rankAll } from "@/lib/feed";
 import { CategoryChips } from "@/components/CategoryChips";
 import { CategorySection } from "@/components/CategorySection";
 import { FeedGrid } from "@/components/FeedGrid";
@@ -21,7 +21,7 @@ export default function HomePage() {
   const catsById = useMemo(() => byId(categories), [categories]);
   const visible = useMemo(() => notHidden(items), [items]);
   const topPicks = useMemo(
-    () => rankAll(visible, catsById).slice(0, TOP_PICKS_COUNT),
+    () => mixByKind(rankAll(visible, catsById)).slice(0, TOP_PICKS_COUNT),
     [visible, catsById]
   );
 
@@ -62,9 +62,8 @@ export default function HomePage() {
           </section>
 
           {categories.map((cat) => {
-            const list = rankAll(
-              inCategory(visible, cat.id),
-              catsById
+            const list = mixByKind(
+              rankAll(inCategory(visible, cat.id), catsById)
             ).slice(0, PER_CATEGORY_COUNT);
             if (!list.length) return null;
             return (

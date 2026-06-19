@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { Inbox } from "lucide-react";
 import { useFeed } from "@/hooks/useFeed";
 import { byId, colorOf } from "@/lib/category";
-import { inCategory, notHidden, rankAll } from "@/lib/feed";
+import { inCategory, mixByKind, notHidden, rankAll } from "@/lib/feed";
 import { PRIORITY_LABELS } from "@/types";
 import { CategoryChips } from "@/components/CategoryChips";
 import { FeedGrid } from "@/components/FeedGrid";
@@ -27,7 +27,7 @@ export default function CategoryPage() {
   const list = useMemo(
     () =>
       category
-        ? rankAll(inCategory(notHidden(items), category.id), catsById)
+        ? mixByKind(rankAll(inCategory(notHidden(items), category.id), catsById))
         : [],
     [items, category, catsById]
   );
