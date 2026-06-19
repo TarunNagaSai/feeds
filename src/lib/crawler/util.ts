@@ -3,53 +3,106 @@ import { createHash } from "node:crypto";
 export const USER_AGENT =
   "Mozilla/5.0 (compatible; GrowthFeedBot/1.0; +https://github.com/TarunNagaSai)";
 
-/** Fetch text with a timeout, a browser-ish UA, and redirect following. */
+/**
+ * A real browser UA. Some hosts — notably YouTube's `feeds/videos.xml`, which
+ * throttles datacenter IPs — reply with 5xx to bot UAs but serve a browser one.
+ */
+export const BROWSER_USER_AGENT =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
+  "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Transient failures worth a retry: rate-limits and server-side errors. */
+function isTransientStatus(status: number): boolean {
+  return status === 429 || status >= 500;
+}
+
+interface FetchOpts {
+  timeoutMs?: number;
+  headers?: Record<string, string>;
+  /** Extra attempts after the first on transient failures (default 2). */
+  retries?: number;
+}
+
+/**
+ * `fetch` with a per-attempt timeout, redirect following, and retry-with-backoff
+ * on transient failures (429/5xx and network/abort errors). Returns the raw body
+ * text alongside the response so callers can parse error bodies themselves.
+ */
+async function request(
+  url: string,
+  opts: FetchOpts & { defaultHeaders?: Record<string, string> } = {}
+): Promise<{ res: Response; text: string }> {
+  const retries = opts.retries ?? 2;
+  let lastErr: unknown;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 15_000);
+    try {
+      const res = await fetch(url, {
+        signal: ctrl.signal,
+        redirect: "follow",
+        headers: {
+          "User-Agent": USER_AGENT,
+          ...opts.defaultHeaders,
+          ...opts.headers,
+        },
+      });
+      const text = await res.text();
+      if (!res.ok && isTransientStatus(res.status) && attempt < retries) {
+        lastErr = new Error(`HTTP ${res.status}`);
+        await sleep(300 * 2 ** attempt + Math.random() * 200); // backoff + jitter
+        continue;
+      }
+      return { res, text };
+    } catch (e) {
+      // Network error / timeout abort — retry if attempts remain.
+      lastErr = e;
+      if (attempt < retries) {
+        await sleep(300 * 2 ** attempt + Math.random() * 200);
+        continue;
+      }
+      throw e instanceof Error ? e : new Error(String(e));
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new Error("Request failed");
+}
+
+/** Fetch text with a timeout, retries, and redirect following. */
 export async function fetchText(
   url: string,
-  opts: { timeoutMs?: number; headers?: Record<string, string> } = {}
+  opts: FetchOpts = {}
 ): Promise<string> {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 15_000);
-  try {
-    const res = await fetch(url, {
-      signal: ctrl.signal,
-      redirect: "follow",
-      headers: { "User-Agent": USER_AGENT, ...opts.headers },
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.text();
-  } finally {
-    clearTimeout(timer);
-  }
+  const { res, text } = await request(url, opts);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return text;
 }
 
 /** Fetch + parse JSON, surfacing API error messages where possible. */
 export async function fetchJson<T>(
   url: string,
-  opts: { timeoutMs?: number; headers?: Record<string, string> } = {}
+  opts: FetchOpts = {}
 ): Promise<T> {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 15_000);
-  try {
-    const res = await fetch(url, {
-      signal: ctrl.signal,
-      redirect: "follow",
-      headers: { "User-Agent": USER_AGENT, Accept: "application/json", ...opts.headers },
-    });
-    const text = await res.text();
-    if (!res.ok) {
-      // Try to pull a useful message out of a JSON error body.
-      try {
-        const j = JSON.parse(text) as { error?: { message?: string } };
-        throw new Error(j.error?.message || `HTTP ${res.status}`);
-      } catch {
-        throw new Error(`HTTP ${res.status}`);
-      }
+  const { res, text } = await request(url, {
+    ...opts,
+    defaultHeaders: { Accept: "application/json" },
+  });
+  if (!res.ok) {
+    // Try to pull a useful message out of a JSON error body.
+    let message = `HTTP ${res.status}`;
+    try {
+      const j = JSON.parse(text) as { error?: { message?: string } };
+      if (j.error?.message) message = j.error.message;
+    } catch {
+      // Non-JSON error body — fall back to the status code.
     }
-    return JSON.parse(text) as T;
-  } finally {
-    clearTimeout(timer);
+    throw new Error(message);
   }
+  return JSON.parse(text) as T;
 }
 
 /** Drop tracking params and fragments so the same article hashes consistently. */

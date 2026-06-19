@@ -11,6 +11,11 @@
   --accent-fg: #ffffff;
   --success: #16a34a;
   --danger: #ef4444;
+
+  /* Background pattern: dot grid + two soft accent glows. */
+  --pattern-dot: rgba(24, 24, 27, 0.045);
+  --pattern-glow-1: rgba(99, 102, 241, 0.1);
+  --pattern-glow-2: rgba(16, 185, 129, 0.07);
 }
 
 @theme inline {
@@ -40,6 +45,10 @@
     --accent-fg: #0b0b14;
     --success: #4ade80;
     --danger: #f87171;
+
+    --pattern-dot: rgba(255, 255, 255, 0.04);
+    --pattern-glow-1: rgba(129, 140, 248, 0.12);
+    --pattern-glow-2: rgba(16, 185, 129, 0.08);
   }
 }
 
@@ -51,6 +60,33 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/*
+ * Decorative background: a fine dot grid overlaid with two soft accent glows,
+ * pinned to the viewport so it stays put while content scrolls. Purely visual,
+ * so it sits behind everything and ignores pointer events.
+ */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(
+      40rem 40rem at 12% -5%,
+      var(--pattern-glow-1),
+      transparent 60%
+    ),
+    radial-gradient(
+      36rem 36rem at 95% 8%,
+      var(--pattern-glow-2),
+      transparent 55%
+    ),
+    radial-gradient(var(--pattern-dot) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 22px 22px;
+  background-position: 0 0, 0 0, 0 0;
 }
 
 @keyframes slideUp {

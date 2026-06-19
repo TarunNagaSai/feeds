@@ -8,10 +8,18 @@ import {
   ref,
 } from "firebase/database";
 import { useEffect, useState } from "react";
+import { readCache, writeCache } from "@/lib/cache";
 import { getDb, isFirebaseConfigured } from "@/lib/firebase";
 import type { FeedItem } from "@/types";
 import { useAuth } from "./useAuth";
 import { useMounted } from "./useMounted";
+
+/** Newest-first by publish time (UI ordering), reused for cache + live data. */
+function byNewest(map: Record<string, FeedItem>): FeedItem[] {
+  return Object.values(map).sort(
+    (a, b) => (b.publishedAt || 0) - (a.publishedAt || 0)
+  );
+}
 
 export interface ItemsState {
   items: FeedItem[];
@@ -41,7 +49,12 @@ export function useItems(limit = 500): ItemsState {
       setState({ items: [], loading: false, error: null });
       return;
     }
-    setState((s) => ({ ...s, loading: true }));
+    // Hydrate from the last-known items so the feed paints instantly; the live
+    // listener below reconciles it. No spinner when we already have something.
+    const cachePath = `users/${uid}/items:${limit}`;
+    const cached = readCache<Record<string, FeedItem>>(cachePath);
+    const cachedItems = cached ? byNewest(cached) : [];
+    setState({ items: cachedItems, loading: cachedItems.length === 0, error: null });
     /* eslint-enable react-hooks/set-state-in-effect */
     const q = query(
       ref(getDb(), `users/${uid}/items`),
@@ -52,12 +65,10 @@ export function useItems(limit = 500): ItemsState {
       q,
       (snap) => {
         const val = (snap.val() ?? {}) as Record<string, FeedItem>;
-        const items = Object.values(val).sort(
-          (a, b) => (b.publishedAt || 0) - (a.publishedAt || 0)
-        );
-        setState({ items, loading: false, error: null });
+        writeCache(cachePath, val);
+        setState({ items: byNewest(val), loading: false, error: null });
       },
-      (err) => setState({ items: [], loading: false, error: err })
+      (err) => setState((s) => ({ ...s, loading: false, error: err }))
     );
     return () => unsub();
   }, [mounted, uid, limit]);

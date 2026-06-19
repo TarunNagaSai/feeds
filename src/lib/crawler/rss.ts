@@ -2,6 +2,7 @@ import Parser from "rss-parser";
 import type { ItemKind } from "@/types";
 import {
   asStr,
+  BROWSER_USER_AGENT,
   fetchText,
   firstImage,
   stripHtml,
@@ -89,7 +90,15 @@ export async function fetchYouTubeChannelItems(
   max = 10
 ): Promise<RawItem[]> {
   const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(channelId)}`;
-  const xml = await fetchText(url);
+  // YouTube throttles datacenter IPs / bot UAs on this endpoint with 5xx, so use
+  // a browser UA + Accept-Language; `fetchText` retries transient failures.
+  const xml = await fetchText(url, {
+    headers: {
+      "User-Agent": BROWSER_USER_AGENT,
+      Accept: "application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.9",
+    },
+  });
   const feed = await parser.parseString(xml);
   const channelTitle = asStr(feed.title);
   const out: RawItem[] = [];

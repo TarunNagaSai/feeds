@@ -15,6 +15,7 @@ import {
   useState,
 } from "react";
 import { isAllowedEmail } from "@/lib/access";
+import { clearCache } from "@/lib/cache";
 import {
   getFirebaseAuth,
   isFirebaseConfigured,
@@ -54,6 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsub = onAuthStateChanged(getFirebaseAuth(), (u) => {
       if (u && !isAllowedEmail(u.email)) {
         // Someone signed in who isn't the owner — sign them straight back out.
+        clearCache();
         void firebaseSignOut(getFirebaseAuth());
         setCurrentUid(null);
         setUser(null);
@@ -90,6 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       },
       async signOut() {
+        clearCache();
         await firebaseSignOut(getFirebaseAuth());
       },
     }),
