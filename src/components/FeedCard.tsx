@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Bookmark,
   EyeOff,
@@ -35,11 +35,29 @@ export function FeedCard({
   const { open } = useItemViewer();
   const [imgFailed, setImgFailed] = useState(false);
   const [saved, setSaved] = useState(Boolean(item.saved));
+  const [fallbackThumb, setFallbackThumb] = useState<string | null>(null);
   const color = colorOf(category?.color);
   const isVideo = item.kind === "video";
   const isRepo = item.sourceType === "github_trending";
   const host = hostOf(item.url);
-  const showImage = Boolean(item.thumbnail) && !imgFailed;
+  const thumbnail = item.thumbnail || fallbackThumb || undefined;
+  const showImage = Boolean(thumbnail) && !imgFailed;
+
+  // Blogs whose feed carried no image: fetch the page's lead image (og:image /
+  // first <img>) server-side and use it as the thumbnail.
+  useEffect(() => {
+    if (item.thumbnail || isVideo || isRepo || !item.url) return;
+    let cancelled = false;
+    fetch(`/api/thumbnail?url=${encodeURIComponent(item.url)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { image?: string | null } | null) => {
+        if (!cancelled && d?.image) setFallbackThumb(d.image);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [item.thumbnail, item.url, isVideo, isRepo]);
 
   function onOpen(e: React.MouseEvent) {
     // Modified / non-primary clicks fall through to the browser (open in a new

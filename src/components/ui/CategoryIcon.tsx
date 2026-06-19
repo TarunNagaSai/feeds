@@ -1,5 +1,6 @@
 import { createElement } from "react";
 import {
+  Bot,
   BrainCircuit,
   Cog,
   Cpu,
@@ -18,6 +19,7 @@ import {
 /** Icon names referenced by seed categories + a few extras, with a fallback. */
 const MAP: Record<string, LucideIcon> = {
   BrainCircuit,
+  Bot,
   Cpu,
   Sigma,
   Cog,

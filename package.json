@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "add-category": "node --import tsx --env-file=.env.local scripts/add-category.ts",
     "crawl": "node --import tsx --env-file=.env.local scripts/crawl.ts",
     "crawl:force": "node --import tsx --env-file=.env.local scripts/crawl.ts --force",
     "crawl:demo": "node --import tsx scripts/crawl.ts --demo"

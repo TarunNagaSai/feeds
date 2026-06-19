@@ -10,7 +10,7 @@ import type { CategoryColor, SourceType } from "@/types";
  * Bump SEED_VERSION when you change this list (the client reseeds on next visit
  * only when forced; a one-time seed happens automatically for a fresh account).
  */
-export const SEED_VERSION = 2;
+export const SEED_VERSION = 3;
 
 export interface DefaultSource {
   type: SourceType;
@@ -62,6 +62,30 @@ export const DEFAULT_CATEGORIES: DefaultCategory[] = [
       { type: "hn_search", name: "Hacker News · LLM", query: "LLM" },
       { type: "youtube_search", name: "YouTube · LLM engineering", query: "LLM engineering" },
       { type: "github_trending", name: "GitHub Trending · LLM", query: "topic:llm" },
+    ],
+  },
+  {
+    name: "Agentic AI",
+    slug: "agentic-ai",
+    description:
+      "Autonomous agents — tool use, planning, multi-agent systems, MCP, orchestration frameworks.",
+    color: "indigo",
+    icon: "Bot",
+    priority: 3,
+    keywords: [
+      "agent", "agentic", "autonomous", "tool use", "tool calling", "function calling",
+      "react agent", "planning", "reasoning", "multi-agent", "orchestration",
+      "langchain", "langgraph", "llamaindex", "crewai", "autogen", "mcp",
+      "model context protocol", "workflow", "memory", "rag agent", "browser agent",
+      "computer use", "claude code", "copilot", "agent framework",
+    ],
+    sources: [
+      { type: "rss", name: "LangChain Blog", url: "https://blog.langchain.dev/rss/" },
+      { type: "rss", name: "Anthropic Engineering", url: "https://rsshub.rssforever.com/anthropic/engineering" },
+      { type: "hn_search", name: "Hacker News · AI agents", query: "AI agents" },
+      { type: "hn_search", name: "Hacker News · MCP", query: "Model Context Protocol" },
+      { type: "youtube_search", name: "YouTube · AI agents", query: "AI agents LLM tool use" },
+      { type: "github_trending", name: "GitHub Trending · AI agents", query: "topic:ai-agents" },
     ],
   },
   {
