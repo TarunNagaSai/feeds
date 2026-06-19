@@ -14,6 +14,8 @@ interface TypeOption {
   fieldLabel: string;
   placeholder: string;
   hint: string;
+  /** When true, the value field may be left blank. */
+  optional?: boolean;
 }
 
 const TYPE_OPTIONS: TypeOption[] = [
@@ -48,6 +50,15 @@ const TYPE_OPTIONS: TypeOption[] = [
     fieldLabel: "Search query",
     placeholder: "large language model",
     hint: "High-signal Hacker News posts matching a query.",
+  },
+  {
+    value: "github_trending",
+    label: "GitHub trending",
+    field: "query",
+    fieldLabel: "Filter (optional)",
+    placeholder: "language:rust  ·  topic:llm  ·  machine learning",
+    hint: "New, fast-rising repos. Leave blank for overall trending, or narrow with text/qualifiers (language:…, topic:…).",
+    optional: true,
   },
 ];
 
@@ -98,7 +109,8 @@ export function SourceForm({
   async function save() {
     if (!name.trim()) return setError("Name is required.");
     if (!categoryId) return setError("Pick a category.");
-    if (!value.trim()) return setError(`${opt.fieldLabel} is required.`);
+    if (!opt.optional && !value.trim())
+      return setError(`${opt.fieldLabel} is required.`);
 
     setBusy(true);
     setError(null);

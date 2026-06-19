@@ -10,6 +10,7 @@ import {
   type RawItem,
 } from "./rss";
 import { fetchYouTubeSearch } from "./youtube";
+import { fetchGitHubTrending } from "./github";
 import { matchCategories, scoreRelevance } from "./score";
 import { clean, hashId, pool, union } from "./util";
 
@@ -52,6 +53,8 @@ async function fetchSource(src: Source): Promise<RawItem[]> {
       return src.query ? fetchYouTubeSearch(src.query, 8) : [];
     case "hn_search":
       return src.query ? fetchRssItems(hackerNewsUrl(src.query), PER_SOURCE_MAX) : [];
+    case "github_trending":
+      return fetchGitHubTrending(src.query ?? "", PER_SOURCE_MAX);
     default:
       return [];
   }

@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Bookmark, EyeOff, MonitorPlay, Newspaper, Play } from "lucide-react";
+import {
+  Bookmark,
+  EyeOff,
+  GitFork,
+  MonitorPlay,
+  Newspaper,
+  Play,
+  Star,
+} from "lucide-react";
 import type { Category, FeedItem } from "@/types";
 import { cn } from "@/lib/cn";
 import { colorOf } from "@/lib/category";
@@ -29,6 +37,7 @@ export function FeedCard({
   const [saved, setSaved] = useState(Boolean(item.saved));
   const color = colorOf(category?.color);
   const isVideo = item.kind === "video";
+  const isRepo = item.sourceType === "github_trending";
   const host = hostOf(item.url);
   const showImage = Boolean(item.thumbnail) && !imgFailed;
 
@@ -122,7 +131,9 @@ export function FeedCard({
           </p>
         )}
         <div className="mt-auto flex items-center gap-1.5 pt-1 text-[11px] text-muted">
-          {isVideo ? (
+          {isRepo ? (
+            <GitFork className="size-3.5 shrink-0" />
+          ) : isVideo ? (
             <MonitorPlay className="size-3.5 shrink-0" />
           ) : (
             <Newspaper className="size-3.5 shrink-0" />
@@ -139,9 +150,16 @@ export function FeedCard({
           {item.views ? (
             <>
               <span aria-hidden>·</span>
-              <span className="shrink-0">
-                {compactNumber(item.views)} views
-              </span>
+              {isRepo ? (
+                <span className="flex shrink-0 items-center gap-0.5">
+                  <Star className="size-3 fill-current" />
+                  {compactNumber(item.views)}
+                </span>
+              ) : (
+                <span className="shrink-0">
+                  {compactNumber(item.views)} views
+                </span>
+              )}
             </>
           ) : null}
         </div>

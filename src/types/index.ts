@@ -5,7 +5,8 @@ export type SourceType =
   | "rss" // any RSS/Atom feed (blogs, newsletters, YouTube channel xml)
   | "youtube_channel" // YouTube channel, fetched via its RSS feed (no API key)
   | "youtube_search" // YouTube Data API search by query (needs YOUTUBE_API_KEY)
-  | "hn_search"; // Hacker News search feed (hnrss.org) by query
+  | "hn_search" // Hacker News search feed (hnrss.org) by query
+  | "github_trending"; // trending GitHub repos via the Search API (optional query)
 
 /** What kind of content an item is — drives card layout. */
 export type ItemKind = "blog" | "video";

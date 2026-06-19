@@ -10,7 +10,7 @@ import type { CategoryColor, SourceType } from "@/types";
  * Bump SEED_VERSION when you change this list (the client reseeds on next visit
  * only when forced; a one-time seed happens automatically for a fresh account).
  */
-export const SEED_VERSION = 1;
+export const SEED_VERSION = 2;
 
 export interface DefaultSource {
   type: SourceType;
@@ -61,6 +61,7 @@ export const DEFAULT_CATEGORIES: DefaultCategory[] = [
       { type: "youtube_channel", name: "Two Minute Papers", channelId: "UCbfYPyITQ-7l4upoX8nvctg" },
       { type: "hn_search", name: "Hacker News · LLM", query: "LLM" },
       { type: "youtube_search", name: "YouTube · LLM engineering", query: "LLM engineering" },
+      { type: "github_trending", name: "GitHub Trending · LLM", query: "topic:llm" },
     ],
   },
   {
@@ -123,6 +124,7 @@ export const DEFAULT_CATEGORIES: DefaultCategory[] = [
       { type: "rss", name: "Rust Blog", url: "https://blog.rust-lang.org/feed.xml" },
       { type: "youtube_channel", name: "ThePrimeagen", channelId: "UC8ENHE5xdFSwx71u3fDH5Xw" },
       { type: "hn_search", name: "Hacker News · Rust", query: "Rust" },
+      { type: "github_trending", name: "GitHub Trending · Rust", query: "language:rust" },
     ],
   },
   {

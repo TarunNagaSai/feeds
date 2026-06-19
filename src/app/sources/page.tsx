@@ -28,6 +28,7 @@ const TYPE_LABEL: Record<SourceType, string> = {
   youtube_channel: "YouTube",
   youtube_search: "YouTube search",
   hn_search: "Hacker News",
+  github_trending: "GitHub",
 };
 
 function Switch({ on, onClick }: { on: boolean; onClick: () => void }) {
