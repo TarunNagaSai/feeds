@@ -174,9 +174,12 @@ export default function SettingsPage() {
               </code>
             </pre>
             <p className="mt-2 text-sm text-muted">
-              On Vercel, add a Cron Job (e.g. every 6 hours) to{" "}
-              <code className="font-mono text-foreground">/api/cron/crawl</code>.
-              Locally, run{" "}
+              On Vercel it&apos;s already wired:{" "}
+              <code className="font-mono text-foreground">vercel.json</code> runs a
+              daily Cron Job against{" "}
+              <code className="font-mono text-foreground">/api/cron/crawl</code> —
+              just set <code className="font-mono text-foreground">CRON_SECRET</code>{" "}
+              in the project env. Locally, run{" "}
               <code className="font-mono text-foreground">npm run crawl</code>.
             </p>
           </Section>

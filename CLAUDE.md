@@ -35,16 +35,19 @@ owner add/edit/remove categories and sources. Single-user, owner-locked.
 
 ## Owner-only app
 
-Hard-locked to one Google account (`ALLOWED_EMAIL` in `src/lib/access.ts`).
-Enforced in three layers that must stay in sync:
+Hard-locked to one Google account. The email comes from `NEXT_PUBLIC_OWNER_EMAIL`
+(`ALLOWED_EMAIL` in `src/lib/access.ts`) — never hardcoded, since the repo is
+public. Enforced in three layers:
 
-1. **RTDB rules** (`database.rules.json`) — the real boundary; the email is
-   hardcoded and scopes everything to `users/{uid}`.
+1. **RTDB rules** (`database.rules.json`) — the real boundary; scopes everything
+   to `users/{uid}` and checks the owner email. Rules can't read env vars, so the
+   email is literal here (repo ships the placeholder `owner@example.com` — set your
+   real one before deploying rules).
 2. **Client** (`AuthProvider`, `src/hooks/useAuth.tsx`) — rejects non-owner sessions.
 3. **Server** (`src/app/api/crawl/route.ts`) — verifies the Firebase ID token.
 
-If you change the allowed email, update `src/lib/access.ts` **and**
-`database.rules.json` (then redeploy rules).
+To change the owner: set `NEXT_PUBLIC_OWNER_EMAIL` (env) **and** the literal email
+in your deployed `database.rules.json`.
 
 ## Architecture
 

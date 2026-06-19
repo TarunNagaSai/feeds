@@ -4,8 +4,8 @@
     ".write": false,
     "users": {
       "$uid": {
-        ".read": "auth != null && auth.uid === $uid && auth.token.email === 'tarunnagasai007@gmail.com'",
-        ".write": "auth != null && auth.uid === $uid && auth.token.email === 'tarunnagasai007@gmail.com'",
+        ".read": "auth != null && auth.uid === $uid && auth.token.email === 'owner@example.com'",
+        ".write": "auth != null && auth.uid === $uid && auth.token.email === 'owner@example.com'",
         "categories": { ".indexOn": ["order"] },
         "sources": { ".indexOn": ["order", "categoryId"] },
         "items": { ".indexOn": ["fetchedAt", "publishedAt", "categoryId", "saved", "relevance"] }

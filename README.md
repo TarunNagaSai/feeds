@@ -47,10 +47,11 @@ JSON file the UI reads in preview mode.
 1. Create a project at the [Firebase Console](https://console.firebase.google.com).
 2. **Build → Realtime Database → Create database.**
 3. **Build → Authentication → Sign-in method → enable Google.**
-4. Paste the contents of [`database.rules.json`](./database.rules.json) into
-   **Realtime Database → Rules** and publish. (The rules hard-lock all data to a
-   single owner email — change it in `database.rules.json` **and**
-   `src/lib/access.ts` if you fork this.)
+4. In [`database.rules.json`](./database.rules.json) replace the placeholder
+   `owner@example.com` with your own Google account email, then paste the file
+   into **Realtime Database → Rules** and publish. (The rules hard-lock all data
+   to that one email. Realtime Database rules can't read env vars, so the email
+   must be literal here — use the same address you set for `NEXT_PUBLIC_OWNER_EMAIL`.)
 
 ### 2. Environment
 
@@ -61,6 +62,8 @@ cp .env.local.example .env.local
 Fill in:
 
 - `NEXT_PUBLIC_FIREBASE_*` — the web config (Project settings → General → Your apps).
+- `NEXT_PUBLIC_OWNER_EMAIL` — your Google account email; the only account allowed
+  to sign in. Must match the email in your deployed `database.rules.json`.
 - `FIREBASE_SERVICE_ACCOUNT_B64` — a service account key, base64-encoded, for the
   crawler. Project settings → Service accounts → **Generate new private key**, then:
   ```bash
@@ -109,9 +112,12 @@ curl -X POST -H "Authorization: Bearer $CRON_SECRET" \
   https://<your-host>/api/cron/crawl
 ```
 
-On **Vercel**, add a Cron Job pointing at `/api/cron/crawl` (e.g. every 6 hours)
-and set `CRON_SECRET` in the project env. Locally, a `cron` entry running
-`npm run crawl` works just as well.
+On **Vercel** this is already wired up: [`vercel.json`](./vercel.json) registers a
+Cron Job hitting `/api/cron/crawl` daily (`0 1 * * *` = 06:30 IST). Just set
+`CRON_SECRET` in the project's Environment Variables — Vercel automatically sends
+it as the `Authorization: Bearer …` header the endpoint checks. (Hobby plans run
+crons once daily; on Pro you can go more frequent, e.g. `0 */6 * * *`.) Locally, a
+`cron` entry running `npm run crawl` works just as well.
 
 Each crawl preserves your `read` / `saved` / `hidden` flags on items it re-sees,
 and prunes unsaved items older than 45 days to keep the database lean.
