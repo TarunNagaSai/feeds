@@ -9,6 +9,7 @@ import {
   Newspaper,
   Play,
   Star,
+  StickyNote,
 } from "lucide-react";
 import type { Category, FeedItem } from "@/types";
 import { cn } from "@/lib/cn";
@@ -179,6 +180,12 @@ export function FeedCard({
                 </span>
               )}
             </>
+          ) : null}
+          {item.note ? (
+            <StickyNote
+              className="ml-auto size-3.5 shrink-0 text-accent"
+              aria-label="Has a note"
+            />
           ) : null}
         </div>
       </div>

@@ -195,6 +195,13 @@ export const toggleSaved = (id: ID, saved: boolean) =>
 export const hideItem = (id: ID) => setItemFlags(id, { hidden: true });
 export const unhideItem = (id: ID) => setItemFlags(id, { hidden: false });
 
+/** Save (or clear, when blank) the owner's freeform note on an item. */
+export async function setItemNote(id: ID, note: string): Promise<void> {
+  await update(ref(getDb(), userPath(`items/${id}`)), {
+    note: note.trim() || null,
+  });
+}
+
 // ---------------------------------------------------------------------------
 // helpers
 // ---------------------------------------------------------------------------

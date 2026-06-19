@@ -256,6 +256,7 @@ export async function runCrawl(opts: CrawlOptions = {}): Promise<CrawlResult> {
       item.read = ex.read;
       item.saved = ex.saved;
       item.hidden = ex.hidden;
+      item.note = ex.note;
       if (ex.publishedAt) item.publishedAt = ex.publishedAt;
       updated++;
     } else {

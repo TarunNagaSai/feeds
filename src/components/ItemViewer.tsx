@@ -10,17 +10,20 @@ import {
 import {
   AlertCircle,
   Bookmark,
+  Check,
   ExternalLink,
   EyeOff,
+  StickyNote,
   X,
 } from "lucide-react";
 import type { Category, FeedItem } from "@/types";
 import { cn } from "@/lib/cn";
 import { colorOf } from "@/lib/category";
 import { compactNumber, formatDuration, hostOf, timeAgo } from "@/lib/format";
-import { hideItem, markRead, toggleSaved } from "@/lib/db";
+import { hideItem, markRead, setItemNote, toggleSaved } from "@/lib/db";
 import { youtubeEmbedUrl, youtubeId } from "@/lib/video";
 import { Button } from "./ui/Button";
+import { Textarea } from "./ui/Input";
 import { Spinner } from "./ui/Spinner";
 
 interface ActiveItem {
@@ -120,6 +123,8 @@ function ItemModal({
     onClose();
   }
 
+  const noteEditor = preview ? null : <NoteEditor item={item} />;
+
   const actionBar = (
     <div className="flex flex-wrap items-center gap-2">
       {!preview && (
@@ -189,9 +194,14 @@ function ItemModal({
               item={item}
               videoId={videoId}
               actionBar={actionBar}
+              noteEditor={noteEditor}
             />
           ) : (
-            <ReaderBody item={item} actionBar={actionBar} />
+            <ReaderBody
+              item={item}
+              actionBar={actionBar}
+              noteEditor={noteEditor}
+            />
           )}
         </div>
       </div>
@@ -203,10 +213,12 @@ function VideoBody({
   item,
   videoId,
   actionBar,
+  noteEditor,
 }: {
   item: FeedItem;
   videoId: string | null;
   actionBar: React.ReactNode;
+  noteEditor: React.ReactNode;
 }) {
   return (
     <div className="space-y-4">
@@ -253,6 +265,8 @@ function VideoBody({
 
       {actionBar}
 
+      {noteEditor}
+
       {item.summary && (
         <p className="whitespace-pre-line border-t border-border pt-4 text-sm leading-relaxed text-muted">
           {item.summary}
@@ -265,9 +279,11 @@ function VideoBody({
 function ReaderBody({
   item,
   actionBar,
+  noteEditor,
 }: {
   item: FeedItem;
   actionBar: React.ReactNode;
+  noteEditor: React.ReactNode;
 }) {
   const [state, setState] = useState<{
     loading: boolean;
@@ -325,6 +341,8 @@ function ReaderBody({
 
       {actionBar}
 
+      {noteEditor}
+
       <div className="border-t border-border pt-4">
         {state.loading ? (
           <div className="flex items-center gap-2 py-10 text-sm text-muted">
@@ -353,5 +371,59 @@ function ReaderBody({
         )}
       </div>
     </article>
+  );
+}
+
+/**
+ * Freeform note for an item, saved to RTDB. Tracks its own saved baseline
+ * because the modal's `item` is a snapshot taken at open (it doesn't live-update
+ * after a write), so dirty/saved state stays correct without a re-fetch.
+ */
+function NoteEditor({ item }: { item: FeedItem }) {
+  const initial = item.note ?? "";
+  const [text, setText] = useState(initial);
+  const [savedText, setSavedText] = useState(initial);
+  const [saving, setSaving] = useState(false);
+  const dirty = text.trim() !== savedText.trim();
+
+  function save() {
+    const value = text;
+    setSaving(true);
+    setItemNote(item.id, value)
+      .then(() => setSavedText(value))
+      .catch(() => {})
+      .finally(() => setSaving(false));
+  }
+
+  return (
+    <div className="space-y-2 rounded-xl border border-border bg-surface-2/50 p-3">
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+          <StickyNote className="size-4 text-muted" />
+          Your notes
+        </span>
+        {!dirty && savedText.trim() && (
+          <span className="flex items-center gap-1 text-xs text-muted">
+            <Check className="size-3.5" /> Saved
+          </span>
+        )}
+      </div>
+      <Textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Jot down a takeaway, idea, or follow-up…"
+        className="bg-surface"
+      />
+      <div className="flex justify-end">
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={save}
+          disabled={!dirty || saving}
+        >
+          {saving ? "Saving…" : "Save note"}
+        </Button>
+      </div>
+    </div>
   );
 }

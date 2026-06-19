@@ -90,6 +90,8 @@ export interface FeedItem {
   read?: boolean;
   saved?: boolean;
   hidden?: boolean;
+  /** Owner's freeform note on this item. */
+  note?: string;
 }
 
 /** Summary of the most recent crawl, stored at `meta/lastCrawl`. */
