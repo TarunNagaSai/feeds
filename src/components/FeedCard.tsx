@@ -96,7 +96,7 @@ export function FeedCard({
         {showImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={item.thumbnail}
+            src={thumbnail}
             alt=""
             loading="lazy"
             onError={() => setImgFailed(true)}

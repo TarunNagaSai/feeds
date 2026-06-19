@@ -7,6 +7,7 @@ import { byId } from "@/lib/category";
 import { CategoryChips } from "@/components/CategoryChips";
 import { FeedGrid } from "@/components/FeedGrid";
 import { PreviewBanner } from "@/components/PreviewBanner";
+import { SavedLinkForm } from "@/components/SavedLinkForm";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LoadingScreen } from "@/components/ui/Spinner";
 
@@ -37,6 +38,8 @@ export default function SavedPage() {
           {saved.length} item{saved.length === 1 ? "" : "s"}
         </span>
       </div>
+
+      {!preview && <SavedLinkForm />}
 
       {saved.length ? (
         <FeedGrid items={saved} categoriesById={catsById} preview={preview} />

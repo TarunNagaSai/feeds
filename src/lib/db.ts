@@ -11,7 +11,9 @@ import { newKey, slugify } from "./ids";
 import type {
   Category,
   CategoryColor,
+  FeedItem,
   ID,
+  ItemKind,
   Source,
   SourceType,
 } from "@/types";
@@ -200,6 +202,71 @@ export async function setItemNote(id: ID, note: string): Promise<void> {
   await update(ref(getDb(), userPath(`items/${id}`)), {
     note: note.trim() || null,
   });
+}
+
+// ---------------------------------------------------------------------------
+// Manually saved links
+// ---------------------------------------------------------------------------
+
+interface LinkMeta {
+  ok: boolean;
+  id: ID;
+  kind: ItemKind;
+  title: string;
+  image: string | null;
+  summary: string | null;
+  source: string;
+  error?: string;
+}
+
+/**
+ * Add an arbitrary URL straight into Saved. Resolves its title/image/summary
+ * via `/api/metadata` (which also returns the crawler-compatible id, so a later
+ * crawl of the same URL merges rather than duplicates), then writes a feed item
+ * flagged `saved`. If the item already exists it's just marked saved, preserving
+ * any existing fields. Returns the item id.
+ */
+export async function addSavedLink(rawUrl: string): Promise<ID> {
+  const url = rawUrl.trim();
+  if (!/^https?:\/\//i.test(url)) {
+    throw new Error("Enter a full http(s) URL.");
+  }
+
+  const res = await fetch(`/api/metadata?url=${encodeURIComponent(url)}`);
+  const meta = (await res.json().catch(() => null)) as LinkMeta | null;
+  if (!res.ok || !meta?.ok) {
+    throw new Error(meta?.error || "Couldn't read that link.");
+  }
+
+  const db = getDb();
+  const path = userPath(`items/${meta.id}`);
+  const existing = (await get(ref(db, path))).val() as FeedItem | null;
+
+  if (existing) {
+    // Already in the feed — just pin it to Saved (and un-hide).
+    await update(ref(db, path), { saved: true, hidden: false });
+    return meta.id;
+  }
+
+  const now = Date.now();
+  const item: FeedItem = clean({
+    id: meta.id,
+    kind: meta.kind,
+    title: meta.title,
+    url,
+    summary: meta.summary || undefined,
+    thumbnail: meta.image || undefined,
+    source: meta.source,
+    sourceId: "manual",
+    sourceType: "rss" as SourceType,
+    categoryId: "",
+    publishedAt: now,
+    fetchedAt: now,
+    relevance: 1,
+    saved: true,
+  });
+  await set(ref(db, path), item);
+  return meta.id;
 }
 
 // ---------------------------------------------------------------------------
