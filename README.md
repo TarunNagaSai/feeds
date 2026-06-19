@@ -16,6 +16,9 @@ everything is editable in the app.
   × category priority, so the things that matter most for growth surface first.
 - **UI** — browse by category, see Top Picks and per-category rows, save items for
   later, hide noise, and **add / edit / remove categories and sources** live.
+- **Read & watch in-app** — click any card to open a built-in **reader** (article
+  fetched + extracted server-side, sanitized, themed) or an embedded **YouTube
+  player**; cmd/ctrl-click still opens the original source.
 - **Offline preview** — without any setup, the app shows real sample data from a
   demo crawl so you can see it immediately.
 
@@ -168,6 +171,8 @@ src/
     saved/ categories/ sources/ settings/
     api/crawl/            # in-app refresh (owner ID token)
     api/cron/crawl/       # scheduled crawl (CRON_SECRET)
+    api/read/             # server-side article extraction for the reader
+  components/ItemViewer   # in-app reader + YouTube player modal
   components/             # UI (FeedCard, CategoryChips, forms, …) + ui/ primitives
   hooks/                  # auth, realtime subscriptions, unified live/preview feed
   lib/

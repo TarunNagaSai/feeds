@@ -49,6 +49,11 @@ export const DEFAULT_CATEGORIES: DefaultCategory[] = [
     ],
     sources: [
       { type: "rss", name: "Hugging Face Blog", url: "https://huggingface.co/blog/feed.xml" },
+      // Anthropic ships no official RSS — these route through an RSSHub mirror
+      // (direct anthropic.com article links). Swap the host in Sources if it ever
+      // rate-limits.
+      { type: "rss", name: "Anthropic News", url: "https://rsshub.rssforever.com/anthropic/news" },
+      { type: "rss", name: "Anthropic Engineering", url: "https://rsshub.rssforever.com/anthropic/engineering" },
       { type: "rss", name: "Ahead of AI (Sebastian Raschka)", url: "https://magazine.sebastianraschka.com/feed" },
       { type: "rss", name: "Lil'Log (Lilian Weng)", url: "https://lilianweng.github.io/index.xml" },
       { type: "rss", name: "Chip Huyen", url: "https://huyenchip.com/feed.xml" },

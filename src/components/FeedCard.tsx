@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { colorOf } from "@/lib/category";
 import { compactNumber, formatDuration, hostOf, timeAgo } from "@/lib/format";
 import { hideItem, markRead, toggleSaved } from "@/lib/db";
+import { useItemViewer } from "./ItemViewer";
 import { CategoryIcon } from "./ui/CategoryIcon";
 
 /**
@@ -23,6 +24,7 @@ export function FeedCard({
   category?: Category;
   preview?: boolean;
 }) {
+  const { open } = useItemViewer();
   const [imgFailed, setImgFailed] = useState(false);
   const [saved, setSaved] = useState(Boolean(item.saved));
   const color = colorOf(category?.color);
@@ -30,8 +32,15 @@ export function FeedCard({
   const host = hostOf(item.url);
   const showImage = Boolean(item.thumbnail) && !imgFailed;
 
-  function onOpen() {
-    if (!preview && !item.read) markRead(item.id).catch(() => {});
+  function onOpen(e: React.MouseEvent) {
+    // Modified / non-primary clicks fall through to the browser (open in a new
+    // tab); a plain click opens the in-app reader/player instead.
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
+      if (!preview && !item.read) markRead(item.id).catch(() => {});
+      return;
+    }
+    e.preventDefault();
+    open(item, category, preview);
   }
   function onToggleSave(e: React.MouseEvent) {
     e.preventDefault();

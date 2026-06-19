@@ -5,6 +5,7 @@ import { isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
 import { seedDefaults } from "@/lib/seed";
 import { Header } from "./Header";
+import { ItemViewerProvider } from "./ItemViewer";
 import { LoginScreen } from "./LoginScreen";
 import { LoadingScreen } from "./ui/Spinner";
 
@@ -39,11 +40,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex w-full flex-1 flex-col">
-      <Header />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-24 pt-5 sm:px-6">
-        {children}
-      </main>
-    </div>
+    <ItemViewerProvider>
+      <div className="flex w-full flex-1 flex-col">
+        <Header />
+        <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-24 pt-5 sm:px-6">
+          {children}
+        </main>
+      </div>
+    </ItemViewerProvider>
   );
 }

@@ -86,6 +86,17 @@ items) → record `meta/lastCrawl`. Fetchers: `rss.ts` (RSS/Atom + YouTube chann
 RSS + HN), `youtube.ts` (Data API search). Scoring: `score.ts`. Per-source errors
 are captured (`lastError`) and never abort the run.
 
+### Reading & watching (in-app viewer)
+
+Clicking a `FeedCard` opens `ItemViewerProvider`'s modal (`src/components/ItemViewer.tsx`)
+instead of navigating away (cmd/ctrl-click still opens the source). Videos embed a
+privacy-mode YouTube iframe (`src/lib/video.ts`). Blogs are fetched + extracted
+**server-side** by `GET /api/read` (`@extractus/article-extractor`), sanitized with
+a strict `sanitize-html` allowlist, and rendered via `.reader-content` styles in
+`globals.css`. `/api/read` has an SSRF guard (public http(s) only) and is public so
+the reader also works in preview mode. The reader/extraction packages are in
+`serverExternalPackages` (next.config.ts).
+
 ### Ranking
 
 Relevance is computed once at crawl time and stored (`score.ts`). The UI computes
