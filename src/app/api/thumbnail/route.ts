@@ -1,8 +1,11 @@
-// Fetches a page's lead image server-side (avoids browser CORS) for blogs whose
-// feed didn't carry a thumbnail. Returns a single absolute image URL, if found.
-// Cached at the edge for a day since lead images rarely change.
+import { extract } from "@extractus/article-extractor";
+
+// Resolves a representative image for a blog whose feed carried no thumbnail.
+// Uses the same article extractor as /api/read to pick the article's real lead
+// image (ignoring nav logos / avatars), with an og:image fallback. Returns a
+// single absolute image URL, if found. Cached a day since lead images rarely
+// change. Public, like /api/read, so it works in preview mode too.
 export const runtime = "nodejs";
-export const revalidate = 86400;
 
 const UA =
   "Mozilla/5.0 (compatible; GrowthFeedBot/1.0; +https://github.com/TarunNagaSai)";
@@ -42,7 +45,6 @@ function isPublicHttpUrl(raw: string): boolean {
 
 /** Pull a meta tag's content by property/name, case-insensitively. */
 function metaContent(html: string, key: string): string | undefined {
-  // Match `<meta ... property="og:image" ... content="...">` in either attr order.
   const patterns = [
     new RegExp(
       `<meta[^>]+(?:property|name)=["']${key}["'][^>]*content=["']([^"']+)["']`,
@@ -60,22 +62,8 @@ function metaContent(html: string, key: string): string | undefined {
   return undefined;
 }
 
-/** Find the best lead image in a page's HTML: og/twitter image, else first <img>. */
-function leadImage(html: string): string | undefined {
-  return (
-    metaContent(html, "og:image") ??
-    metaContent(html, "twitter:image") ??
-    metaContent(html, "twitter:image:src") ??
-    /<img[^>]+src=["']([^"']+)["']/i.exec(html)?.[1] ??
-    undefined
-  );
-}
-
-export async function GET(req: Request) {
-  const url = new URL(req.url).searchParams.get("url");
-  if (!url || !isPublicHttpUrl(url)) {
-    return Response.json({ ok: false, image: null }, { status: 400 });
-  }
+/** Fallback: scrape an og/twitter image straight from the page HTML. */
+async function ogImage(url: string): Promise<string | undefined> {
   try {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 8000);
@@ -85,17 +73,38 @@ export async function GET(req: Request) {
       headers: { "User-Agent": UA, Accept: "text/html,*/*;q=0.8" },
     }).finally(() => clearTimeout(timer));
     if (!res.ok || !(res.headers.get("content-type") ?? "").includes("html")) {
-      return Response.json({ ok: true, image: null });
+      return undefined;
     }
-    // Only read the head-ish portion — lead images live near the top.
     const html = (await res.text()).slice(0, 200_000);
-    const raw = leadImage(html);
-    const image = raw ? new URL(raw, res.url || url).toString() : null;
-    return Response.json(
-      { ok: true, image },
-      { headers: { "Cache-Control": "public, max-age=86400" } }
-    );
+    const raw =
+      metaContent(html, "og:image") ??
+      metaContent(html, "twitter:image") ??
+      metaContent(html, "twitter:image:src");
+    return raw ? new URL(raw, res.url || url).toString() : undefined;
   } catch {
-    return Response.json({ ok: true, image: null });
+    return undefined;
   }
+}
+
+export async function GET(req: Request) {
+  const url = new URL(req.url).searchParams.get("url");
+  if (!url || !isPublicHttpUrl(url)) {
+    return Response.json({ ok: false, image: null }, { status: 400 });
+  }
+
+  let image: string | null = null;
+  try {
+    // Primary: the article extractor picks the post's real lead image and skips
+    // nav logos / avatars that naive <img> scraping would grab.
+    const article = await extract(url, {}, { headers: { "user-agent": UA } });
+    image = article?.image ?? null;
+  } catch {
+    // Extraction failed (paywall, JS-only page, 4xx) — fall through to og:image.
+  }
+  if (!image) image = (await ogImage(url)) ?? null;
+
+  return Response.json(
+    { ok: true, image },
+    { headers: { "Cache-Control": "public, max-age=86400" } }
+  );
 }
