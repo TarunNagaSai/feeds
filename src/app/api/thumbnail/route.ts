@@ -7,8 +7,11 @@ import { extract } from "@extractus/article-extractor";
 // change. Public, like /api/read, so it works in preview mode too.
 export const runtime = "nodejs";
 
+// A real browser UA: some hosts (notably Medium-backed blogs like
+// blog.flutter.dev) 403 bot user-agents but serve a browser one.
 const UA =
-  "Mozilla/5.0 (compatible; GrowthFeedBot/1.0; +https://github.com/TarunNagaSai)";
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
+  "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
 /**
  * Allow only public http(s) URLs. Blocks localhost and private/reserved IP
